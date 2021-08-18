@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  api:
+    container_name: api-backend
+    build:
+      context: ./backend
+    environment:
+      - CONNECTION_STRING=postgres://root:root@db/root_db
+    depends_on:
+      - db  
+    networks:
+      - network_private_mu
+      - network_public_mu
+
+  web:
+    container_name: web-forent
+    build:
+      context: ./frontend   
+    environment:
+      - API_URL=http://api:3001/data
+    depends_on:
+      - api
+    ports:
+      - 80:3000
+    networks:
+      - network_public_mu
+
+  db:
+    container_name: db-postgres
+    image: postgres:11.2-alpine
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: root_db
+    ports:
+      - 5432:5432  
+    volumes:
+      - ./sql_scripts/:/docker-entrypoint-initdb.d 
+      - postgres_database:/var/lib/postgresql
+      - postgres_configuration:/etc/postgresql
+    networks:
+      - network_private_mu
+
+
+volumes:
+  postgres_database:
+  postgres_configuration:
+
+networks:
+  network_private_mu:
+    name: network_private_mu
+    driver: bridge
+  network_public_mu:
+    name: network_public_mu
+    driver: bridge
